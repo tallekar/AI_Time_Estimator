@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TimeForge — AI Project Estimator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- Background grid -->
+<div class="bg-grid"></div>
+<div class="bg-noise"></div>
+
+<!-- Header -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-wrap">
+      <span class="logo-icon">⟨/⟩</span>
+      <span class="logo-text">TimeForge<sup>AI</sup></span>
+    </div>
+    <nav class="header-nav">
+      <span class="nav-badge">RF Model</span>
+      <span class="nav-badge {% if metrics.r2 %}green{% endif %}">
+        R² {% if metrics.r2 %}{{ metrics.r2 }}{% else %}N/A{% endif %}
+      </span>
+      <span class="nav-badge">MAE ~{% if metrics.mae %}{{ metrics.mae }}d{% else %}N/A{% endif %}</span>
+    </nav>
+  </div>
+</header>
+
+<main class="main-layout">
+
+  <!-- LEFT PANEL: Form -->
+  <section class="panel panel-form">
+    <div class="panel-label">INPUT PARAMETERS</div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab active" data-tab="manual">Manual Input</button>
+      <button class="tab" data-tab="nlp">Describe Project</button>
+    </div>
+
+    <!-- MANUAL FORM -->
+    <div id="tab-manual" class="tab-content active">
+      <div class="form-grid">
+
+        <div class="field-group">
+          <label class="field-label" for="num_employees">
+            <span class="field-icon">👥</span> Team Size
+            <span class="field-range">1 – 50</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="num_employees" name="num_employees" min="1" max="50" value="8" class="slider">
+            <div class="value-pill" id="val_num_employees">8</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="complexity">
+            <span class="field-icon">🧩</span> Project Complexity
+            <span class="field-range">1 – 10</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="complexity" name="complexity" min="1" max="10" value="5" class="slider">
+            <div class="value-pill" id="val_complexity">5</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="team_experience">
+            <span class="field-icon">🎓</span> Avg. Team Experience (yrs)
+            <span class="field-range">1 – 10</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="team_experience" name="team_experience" min="1" max="10" value="5" class="slider">
+            <div class="value-pill" id="val_team_experience">5</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="num_modules">
+            <span class="field-icon">📦</span> Number of Modules
+            <span class="field-range">1 – 30</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="num_modules" name="num_modules" min="1" max="30" value="8" class="slider">
+            <div class="value-pill" id="val_num_modules">8</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="working_hours_day">
+            <span class="field-icon">⏰</span> Working Hours / Day
+            <span class="field-range">4 – 12</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="working_hours_day" name="working_hours_day" min="4" max="12" value="8" class="slider">
+            <div class="value-pill" id="val_working_hours_day">8</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="deadline_pressure">
+            <span class="field-icon">🔥</span> Deadline Pressure
+            <span class="field-range">1 – 10</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="deadline_pressure" name="deadline_pressure" min="1" max="10" value="5" class="slider">
+            <div class="value-pill" id="val_deadline_pressure">5</div>
+          </div>
+        </div>
+
+        <div class="field-group full-width">
+          <label class="field-label" for="requirement_clarity">
+            <span class="field-icon">📋</span> Requirement Clarity
+            <span class="field-range">1 – 10</span>
+          </label>
+          <div class="range-row">
+            <input type="range" id="requirement_clarity" name="requirement_clarity" min="1" max="10" value="7" class="slider">
+            <div class="value-pill" id="val_requirement_clarity">7</div>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="btn-predict" id="btn-predict">
+        <span class="btn-text">Estimate Duration</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+    <!-- NLP FORM -->
+    <div id="tab-nlp" class="tab-content">
+      <div class="nlp-info">
+        <p>Describe your project in plain language. The AI will extract parameters and estimate duration.</p>
+        <p class="nlp-hint">e.g. <em>"We have a team of 12 developers with 6 years experience building a complex e-commerce platform with 20 modules, working 8 hours/day."</em></p>
+      </div>
+      <textarea id="nlp-text" class="nlp-textarea" placeholder="Describe your software project here…" rows="6" maxlength="2000"></textarea>
+      <div class="nlp-char-count"><span id="nlp-chars">0</span>/2000</div>
+      <button class="btn-predict" id="btn-nlp">
+        <span class="btn-text">Analyse & Estimate</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" id="error-box" style="display:none;"></div>
+  </section>
+
+  <!-- RIGHT PANEL: Results -->
+  <section class="panel panel-results" id="results-panel">
+
+    <!-- Empty state -->
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">📊</div>
+      <p class="empty-title">Awaiting Input</p>
+      <p class="empty-sub">Configure your project parameters and click Estimate Duration</p>
+    </div>
+
+    <!-- Results (hidden until prediction) -->
+    <div class="results-content" id="results-content" style="display:none;">
+
+      <div class="panel-label">ESTIMATION RESULT</div>
+
+      <!-- Main result card -->
+      <div class="result-card">
+        <div class="result-main">
+          <div class="result-days" id="res-days">—</div>
+          <div class="result-unit">days</div>
+        </div>
+        <div class="result-conversions">
+          <div class="conv-chip"><span id="res-weeks">—</span> weeks</div>
+          <div class="conv-chip"><span id="res-months">—</span> months</div>
+        </div>
+        <!-- Confidence bar -->
+        <div class="confidence-block">
+          <div class="conf-label">90% Confidence Range</div>
+          <div class="conf-bar-wrap">
+            <span class="conf-lo" id="conf-lo">—</span>
+            <div class="conf-bar">
+              <div class="conf-fill" id="conf-fill"></div>
+              <div class="conf-marker" id="conf-marker"></div>
+            </div>
+            <span class="conf-hi" id="conf-hi">—</span>
+          </div>
+          <div class="conf-range-text" id="conf-range-text">—</div>
+        </div>
+      </div>
+
+      <!-- Feature Importance mini chart -->
+      <div class="insight-card" id="importance-card">
+        <div class="insight-title">📊 Feature Impact</div>
+        <div class="importance-bars" id="importance-bars"></div>
+      </div>
+
+      <!-- NLP parsed features (shown only for NLP mode) -->
+      <div class="insight-card" id="nlp-parsed-card" style="display:none;">
+        <div class="insight-title">🔍 Extracted Parameters</div>
+        <div class="parsed-grid" id="parsed-grid"></div>
+      </div>
+
+      <!-- Suggestions -->
+      <div class="insight-card" id="suggestions-card">
+        <div class="insight-title">💡 Optimisation Suggestions</div>
+        <ul class="suggestions-list" id="suggestions-list"></ul>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>TimeForge AI — Random Forest Regressor</span>
+    <span>Training samples: 6,000 &nbsp;|&nbsp; Trees: 300 &nbsp;|&nbsp; CV-MAE: ~{{ metrics.cv_mae if metrics.cv_mae else 'N/A' }}d</span>
+  </div>
+</footer>
+
+<script id="__importances__" type="application/json">{{ importances | tojson }}</script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
